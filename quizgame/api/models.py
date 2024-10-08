@@ -39,11 +39,7 @@ class Question(models.Model):
     """
 
     quiz = models.ForeignKey(Quiz, related_name="questions", on_delete=models.CASCADE)
-    text = models.TextField()
-    # Type of question: multiple choice, true/false, etc.
-    type = models.CharField(max_length=255)
-    number_of_answers = models.IntegerField(default=4)
-    # Difficulty of question: easy, medium, hard, etc.
+    text = models.TextField(max_length=400)
     difficulty = models.CharField(max_length=255)
 
     def __str__(self):
@@ -73,3 +69,24 @@ class QuizSession(models.Model):
 
     def __str__(self):
         return f"{self.quiz.title} - {', '.join(player.username for player in self.players.all())}"
+
+
+class Player(models.Model):
+    """
+    A Player represents a user who is playing a quiz.
+    It has a user, score, and current quiz session.
+
+    Attributes:
+        user (OneToOneField): The user associated with the player.
+        score (IntegerField): The player's score.
+        current_session (ForeignKey): The current quiz session the player is in.
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
+    current_session = models.ForeignKey(
+        QuizSession, on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    def __str__(self):
+        return self.user.username

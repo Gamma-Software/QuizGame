@@ -17,16 +17,19 @@ Including another URLconf
 
 from django.urls import path
 from .views import (
+    QuestionListCreateView,
     QuizListCreateView,
     QuizDetailView,
     QuizSessionCreateView,
     QuizSessionDetailView,
     UserQuizSessionDetailView,
+    PlayerDetailView,
 )
 
 urlpatterns = [
     path("quizzes/", QuizListCreateView.as_view(), name="quiz-list-create"),
     path("quizzes/<int:pk>/", QuizDetailView.as_view(), name="quiz-detail"),
+    path("questions/", QuestionListCreateView.as_view(), name="question-list-create"),
     path("sessions/", QuizSessionCreateView.as_view(), name="quiz-session-create"),
     path(
         "sessions/<int:pk>/",
@@ -38,4 +41,5 @@ urlpatterns = [
         UserQuizSessionDetailView.as_view(),
         name="user-quiz-session-detail",
     ),
+    path("me/", PlayerDetailView.as_view(), name="player-detail"),
 ]

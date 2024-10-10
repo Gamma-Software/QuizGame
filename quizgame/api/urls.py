@@ -24,6 +24,7 @@ from .views import (
     QuizSessionDetailView,
     UserQuizSessionDetailView,
     PlayerDetailView,
+    NextQuestionView,
 )
 
 urlpatterns = [
@@ -31,6 +32,11 @@ urlpatterns = [
     path("quizzes/<int:pk>/", QuizDetailView.as_view(), name="quiz-detail"),
     path("questions/", QuestionListCreateView.as_view(), name="question-list-create"),
     path("sessions/", QuizSessionCreateView.as_view(), name="quiz-session-create"),
+    path(
+        "session/<int:pk>/next-question/",
+        NextQuestionView.as_view(),
+        name="next-question",
+    ),
     path(
         "sessions/<int:pk>/",
         QuizSessionDetailView.as_view(),

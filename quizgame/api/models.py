@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 
 # Create your models here.
@@ -33,17 +35,37 @@ class Question(models.Model):
     Attributes:
         quiz (ForeignKey): The Quiz this question belongs to.
         text (TextField): The text of the question.
-        type (CharField): The type of question (e.g., multiple choice, true/false).
-        number_of_answers (IntegerField): The number of possible answers for this question.
+        order_in_quiz (IntegerField): The order of the question within the quiz.
         difficulty (CharField): The difficulty level of the question.
     """
 
     quiz = models.ForeignKey(Quiz, related_name="questions", on_delete=models.CASCADE)
     text = models.TextField(max_length=400)
+    order_in_quiz = models.IntegerField(default=0)
     difficulty = models.CharField(max_length=255)
 
     def __str__(self):
         return str(self.text)
+
+
+# Signal receiver function to automatically set the order of a new question
+@receiver(pre_save, sender=Question)
+def set_question_order(sender, instance, **kwargs):
+    # Check if this is a new question (order_in_quiz is still the default 0)
+    if instance.order_in_quiz == 0:
+        # Query for the last question in the same quiz
+        last_question = (
+            Question.objects.filter(quiz=instance.quiz)
+            .order_by("-order_in_quiz")
+            .first()
+        )
+
+        if last_question:
+            # If there's a last question, set the new question's order to be one more
+            instance.order_in_quiz = last_question.order_in_quiz + 1
+        else:
+            # If this is the first question in the quiz, set order to 1
+            instance.order_in_quiz = 1
 
 
 class Answer(models.Model):
@@ -57,14 +79,17 @@ class Answer(models.Model):
         return str(self.text)
 
 
-class QuizSession(models.Model):
+class Session(models.Model):
+    """
+    A Session represents a quiz session with a quiz and players.
+    It has a quiz, players, current question, and last updated timestamp.
+    """
 
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    players = models.ManyToManyField(User, related_name="quiz_sessions")
+    players = models.ManyToManyField(User, related_name="session")
     current_question = models.ForeignKey(
         Question, null=True, blank=True, on_delete=models.SET_NULL
     )
-    completed = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -85,7 +110,7 @@ class Player(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     score = models.IntegerField(default=0)
     current_session = models.ForeignKey(
-        QuizSession, on_delete=models.CASCADE, null=True, blank=True
+        Session, on_delete=models.CASCADE, null=True, blank=True
     )
 
     def __str__(self):

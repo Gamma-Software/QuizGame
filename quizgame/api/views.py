@@ -80,3 +80,29 @@ class PlayerDetailView(APIView):
         return Response(
             {"detail": "Player not found."}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+class NextQuestionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        session = get_object_or_404(Session, pk=pk)
+
+        # Check if the authenticated user is the creator of the session
+        if session.quiz.creator != request.user:
+            return Response(
+                {
+                    "detail": "You are not authorized to update this session because you are not the creator."
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        next_question = session.get_next_question()
+        if next_question:
+            serializer = QuestionSerializer(next_question)
+            return Response(serializer.data)
+        else:
+            return Response(
+                {"detail": "No more questions available."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
